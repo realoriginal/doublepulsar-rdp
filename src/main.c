@@ -29,6 +29,7 @@
 #include "winapi.h"
 #include "hashes.h"
 
+#define PTR(x) ((ULONG_PTR)x)
 #define RV2OFF(Base, Rva)(((ULONG_PTR)Base) + Rva) 
 #define NT_HDR(x) (PIMAGE_NT_HEADERS)\
 (RV2OFF(x, ((PIMAGE_DOS_HEADER)x)->e_lfanew))
@@ -44,7 +45,22 @@ INT WindowsEntrypoint()
   if (( Drvs.NtosKrnlBase != NULL ) && 
       ( Drvs.RdpwdBase    != NULL ))
   {
-    LPVOID * RequestDispatchTable = GetPeSect(Drvs.RdpwdBase, HASH_RDATA);
+    LPVOID           *ReqTbl = NULL;
+    LPVOID            SecEnd = NULL;
+
+    SecEnd = GetPeSect(Drvs.RdpwdBase, HASH_TEXT);
+    ReqTbl = GetPeSect(Drvs.RdpwdBase, HASH_RDATA);
+    
+    // Signature: Searches for the Remote Desktop Protocol
+    // (rdpwd.sys) signature for g_T120RequestDispatch Table.
+    if ( (PTR(Drvs.RdpwdBase) < PTR(ReqTbl[0]) < PTR(SecEnd)) &&
+         (PTR(Drvs.RdpwdBase) < PTR(ReqTbl[1]) < PTR(SecEnd)) &&
+	 (PTR(ReqTbl[2]) != PTR(ReqTbl[3]))                   &&
+	 (PTR(ReqTbl[4]) == PTR(ReqTbl[5]))                   &&
+	 (PTR(ReqTbl[6]) == PTR(NULL)) )
+    {
+
+    };
   };
 
   return 0;

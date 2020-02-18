@@ -34,5 +34,6 @@
 #define HASH_NTOSKRNL                 0x4c76fe1d
 
 #define HASH_RDATA                    0x6796e92c
+#define HASH_TEXT                     0xd4991785
 
 #endif
