@@ -155,7 +155,7 @@ PVOID GetPeFunc(PVOID ModPtr, DWORD FunHsh)
   return NULL;
 };
 
-PVOID GetPeSect(PVOID ModPtr, DWORD SecHsh)
+PVOID GetPeSect(PVOID ModPtr, DWORD SecHsh, SIZE_T * SizeLen)
 {
   PIMAGE_DOS_HEADER     DosHdr = NULL;
   PIMAGE_NT_HEADERS     NtsHdr = NULL;
@@ -170,6 +170,7 @@ PVOID GetPeSect(PVOID ModPtr, DWORD SecHsh)
     DWORD SecStr = HashStringDjb2(&SecHdr[i].Name, 0);
     if ( SecStr == SecHsh ) 
     {
+      if ( SizeLen != NULL ) { *SizeLen = SecHdr[i].Misc.VirtualSize; };
       return (PVOID)(ModPtr + SecHdr[i].VirtualAddress);
     };
   };

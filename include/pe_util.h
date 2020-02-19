@@ -56,6 +56,6 @@ PVOID GetPeBase(DWORD ModHsh);
  * 	returns a pointer to the reqested module' sections
  * 	virtualaddress.
 */
-PVOID GetPeSect(PVOID ModPtr, DWORD SecHsh);
+PVOID GetPeSect(PVOID ModPtr, DWORD SecHsh, SIZE_T * SizeLen);
 
 #endif
