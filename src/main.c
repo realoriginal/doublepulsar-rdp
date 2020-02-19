@@ -24,6 +24,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include <windows.h>
+#include <intrin.h>
 #include "pe_util.h"
 #include "hs_util.h"
 #include "winapi.h"
@@ -33,6 +34,23 @@
 #define RV2OFF(Base, Rva)(((ULONG_PTR)Base) + Rva) 
 #define NT_HDR(x) (PIMAGE_NT_HEADERS)\
 (RV2OFF(x, ((PIMAGE_DOS_HEADER)x)->e_lfanew))
+
+
+static inline 
+__attribute__((always_inline))
+VOID DisableWriteProtection()
+{
+	__asm__ __volatile__ ( "cli\n" );
+	__writecr0(__readcr0() & (~(1 << 16)));
+};
+
+static inline
+__attribute__((always_inline))
+VOID EnableWriteProtection()
+{
+	__writecr0(__readcr0() | (1 << 16));
+	__asm__ __volatile__ ( "sti\n" );
+};
 
 INT WindowsEntrypoint()
 {
@@ -62,6 +80,7 @@ INT WindowsEntrypoint()
 	   (PTR(ReqTbl[4])     == PTR(ReqTbl[5])) &&
 	   (PTR(ReqTbl[6])     == PTR(NULL)) )
       {
+	      break;
       };
     };
   };
